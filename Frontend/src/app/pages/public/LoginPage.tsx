@@ -161,7 +161,7 @@ export const LoginPage = () => {
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-600 to-indigo-800 relative overflow-hidden">
         <div className="absolute inset-0">
           <ImageWithFallback
-            src="https://images.unsplash.com/photo-1757774636349-a65b04ab1844?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBjb250cm9sJTIwcm9vbSUyMHRlY2hub2xvZ3l8ZW58MXx8fHwxNzcxNjUzNjQ5fDA&ixlib=rb-4.1.0&q=80&w=1080"
+            src="https://etedge-insights.com/wp-content/uploads/2025/05/Logistics-Truck-India.jpg"
             alt="Fleet control center"
             className="w-full h-full object-cover opacity-20"
           />

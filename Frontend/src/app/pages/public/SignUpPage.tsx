@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 
 export const SignUpPage = () => {
   const navigate = useNavigate();
@@ -67,7 +68,15 @@ export const SignUpPage = () => {
           </p>
         </motion.div>
       </div>
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-600 to-indigo-800" />
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-indigo-600 to-indigo-800 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <ImageWithFallback
+            src="https://etedge-insights.com/wp-content/uploads/2025/05/Logistics-Truck-India.jpg"
+            alt="Logistics trucks in India"
+            className="w-full h-full object-cover opacity-20"
+          />
+        </div>
+      </div>
     </div>
   );
 };
