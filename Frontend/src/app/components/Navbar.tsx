@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Truck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,20 +87,31 @@ export const Navbar = () => {
             >
               Contact
             </a>
-            <button
-              onClick={() => navigate('/login')}
-              className={`hidden md:block transition-colors hover:text-indigo-600 ${
-                isScrolled ? 'text-gray-700' : 'text-white'
-              }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-full transition-all hover:shadow-lg hover:scale-105"
-            >
-              Check Pricing
-            </button>
+            {isAuthenticated ? (
+              <button
+                onClick={() => navigate('/app/dashboard')}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-full transition-all hover:shadow-lg hover:scale-105"
+              >
+                Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className={`hidden md:block transition-colors hover:text-indigo-600 ${
+                    isScrolled ? 'text-gray-700' : 'text-white'
+                  }`}
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-full transition-all hover:shadow-lg hover:scale-105"
+                >
+                  Check Pricing
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

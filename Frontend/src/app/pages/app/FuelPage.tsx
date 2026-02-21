@@ -1,82 +1,115 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, Filter, Fuel, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Search, Fuel, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import api from '../../lib/api';
+import { getSocket } from '../../lib/socket';
+import { format } from 'date-fns';
+
+const LITERS_PER_GALLON = 3.78541;
+type Tx = {
+  id: string;
+  vehicle: string;
+  driver: string;
+  date: string;
+  location: string;
+  gallons: number;
+  price: number;
+  total: number;
+};
 
 export const FuelPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const queryClient = useQueryClient();
 
-  const monthlyData = [
-    { month: 'Jan', cost: 45000, gallons: 8200 },
-    { month: 'Feb', cost: 42000, gallons: 7800 },
-    { month: 'Mar', cost: 38000, gallons: 7200 },
-    { month: 'Apr', cost: 35000, gallons: 6800 },
-    { month: 'May', cost: 32000, gallons: 6200 },
-    { month: 'Jun', cost: 29000, gallons: 5800 },
-  ];
+  const { data: logs } = useQuery({
+    queryKey: ['fuel'],
+    queryFn: async () => {
+      const res = await api.get('/fuel');
+      return res.data?.logs ?? [];
+    },
+    staleTime: 30000,
+  });
 
-  const vehicleEfficiency = [
-    { name: 'Semi Trucks', value: 42, color: '#6366f1' },
-    { name: 'Cargo Vans', value: 28, color: '#8b5cf6' },
-    { name: 'Delivery Vans', value: 18, color: '#ec4899' },
-    { name: 'Box Trucks', value: 12, color: '#10b981' },
-  ];
+  useEffect(() => {
+    const s = getSocket();
+    const refetch = () => queryClient.invalidateQueries({ queryKey: ['fuel'] });
+    s.on('fuel:added', refetch);
+    return () => {
+      s.off('fuel:added', refetch);
+    };
+  }, [queryClient]);
 
-  const recentTransactions = [
-    {
-      id: 1,
-      vehicle: 'Truck A-247',
-      driver: 'Mike Johnson',
-      date: '2026-02-21 08:30',
-      location: 'Shell Station - Downtown',
-      gallons: 85.2,
-      price: 3.45,
-      total: 293.94,
-    },
-    {
-      id: 2,
-      vehicle: 'Van B-189',
-      driver: 'Sarah Williams',
-      date: '2026-02-21 07:15',
-      location: 'BP - Highway Exit 42',
-      gallons: 42.8,
-      price: 3.52,
-      total: 150.66,
-    },
-    {
-      id: 3,
-      vehicle: 'Truck D-112',
-      driver: 'Emily Davis',
-      date: '2026-02-20 18:45',
-      location: 'Chevron - Industrial Park',
-      gallons: 78.5,
-      price: 3.48,
-      total: 273.18,
-    },
-    {
-      id: 4,
-      vehicle: 'Van F-678',
-      driver: 'Jessica Lee',
-      date: '2026-02-20 16:20',
-      location: 'Mobil - North Side',
-      gallons: 38.2,
-      price: 3.55,
-      total: 135.61,
-    },
-    {
-      id: 5,
-      vehicle: 'Truck E-455',
-      driver: 'Robert Martinez',
-      date: '2026-02-20 14:10',
-      location: 'Shell Station - Airport',
-      gallons: 92.3,
-      price: 3.42,
-      total: 315.67,
-    },
-  ];
+  const monthlyData = useMemo(() => {
+    const now = new Date();
+    const months: { key: string; label: string; y: number; m: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: format(d, 'MMM'),
+        y: d.getFullYear(),
+        m: d.getMonth(),
+      });
+    }
+    const totals: Record<string, { cost: number; gallons: number }> = Object.fromEntries(
+      months.map((m) => [m.key, { cost: 0, gallons: 0 }])
+    );
+    (logs ?? []).forEach((l: any) => {
+      const dt = new Date(l.fuelDate ?? l.createdAt);
+      const key = `${dt.getFullYear()}-${dt.getMonth()}`;
+      if (totals[key]) {
+        totals[key].cost += Number(l.cost ?? 0);
+        totals[key].gallons += Number(l.liters ?? 0) / LITERS_PER_GALLON;
+      }
+    });
+    return months.map((m) => ({
+      month: m.label,
+      cost: Math.round(totals[m.key].cost),
+      gallons: Math.round(totals[m.key].gallons),
+    }));
+  }, [logs]);
+
+  const vehicleByType = useMemo(() => {
+    const buckets: Record<string, number> = {};
+    (logs ?? []).forEach((l: any) => {
+      const type = l.vehicle?.type || 'UNKNOWN';
+      buckets[type] = (buckets[type] || 0) + Number(l.liters ?? 0);
+    });
+    const colors: Record<string, string> = {
+      TRUCK: '#6366f1',
+      VAN: '#8b5cf6',
+      BIKE: '#10b981',
+      UNKNOWN: '#ec4899',
+    };
+    return Object.entries(buckets).map(([name, liters]) => ({
+      name,
+      value: Math.round((Number(liters) / LITERS_PER_GALLON) * 10) / 10,
+      color: colors[name] || '#6366f1',
+    }));
+  }, [logs]);
+
+  const recentTransactions = useMemo<Tx[]>(() => {
+    return (logs ?? []).slice(0, 50).map((l: any) => {
+      const gallons = Number(l.liters ?? 0) / LITERS_PER_GALLON;
+      const total = Number(l.cost ?? 0);
+      const price = gallons > 0 ? total / gallons : 0;
+      return {
+        id: l.id,
+        vehicle: l.vehicle?.vehicleCode ?? l.vehicleId,
+        driver: l.trip?.driver?.fullName ?? '-',
+        date: format(new Date(l.fuelDate ?? l.createdAt), 'yyyy-MM-dd HH:mm'),
+        location: '-',
+        gallons,
+        price,
+        total,
+      };
+    });
+  }, [logs]);
 
   const filteredTransactions = recentTransactions.filter(
-    (tx) =>
+    (tx: Tx) =>
       tx.vehicle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tx.driver.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tx.location.toLowerCase().includes(searchQuery.toLowerCase())
@@ -101,7 +134,9 @@ export const FuelPage = () => {
             <span className="text-sm text-gray-600">Monthly Cost</span>
             <Fuel className="w-5 h-5 text-indigo-600" />
           </div>
-          <div className="text-3xl font-bold text-gray-900">$29,000</div>
+          <div className="text-3xl font-bold text-gray-900">
+            ${Math.round(monthlyData[5]?.cost ?? 0).toLocaleString()}
+          </div>
           <div className="flex items-center text-sm text-green-600 mt-2">
             <TrendingDown className="w-4 h-4 mr-1" />
             <span>-9.4% from last month</span>
@@ -117,7 +152,9 @@ export const FuelPage = () => {
             <span className="text-sm text-gray-600">Total Gallons</span>
             <Fuel className="w-5 h-5 text-blue-600" />
           </div>
-          <div className="text-3xl font-bold text-gray-900">5,800</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {(Math.round((monthlyData[5]?.gallons ?? 0) * 10) / 10).toLocaleString()}
+          </div>
           <div className="flex items-center text-sm text-green-600 mt-2">
             <TrendingDown className="w-4 h-4 mr-1" />
             <span>-6.5% from last month</span>
@@ -133,7 +170,13 @@ export const FuelPage = () => {
             <span className="text-sm text-gray-600">Avg Price/Gallon</span>
             <TrendingUp className="w-5 h-5 text-orange-600" />
           </div>
-          <div className="text-3xl font-bold text-gray-900">$3.48</div>
+          <div className="text-3xl font-bold text-gray-900">
+            $
+            {((monthlyData[5]?.gallons ?? 0) > 0
+              ? (monthlyData[5]?.cost ?? 0) / (monthlyData[5]?.gallons ?? 1)
+              : 0
+            ).toFixed(2)}
+          </div>
           <div className="flex items-center text-sm text-red-600 mt-2">
             <TrendingUp className="w-4 h-4 mr-1" />
             <span>+2.1% from last month</span>
@@ -146,10 +189,16 @@ export const FuelPage = () => {
           className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Fleet MPG</span>
+            <span className="text-sm text-gray-600">Fills This Month</span>
             <TrendingUp className="w-5 h-5 text-green-600" />
           </div>
-          <div className="text-3xl font-bold text-gray-900">8.2</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {(logs ?? []).filter((l: any) => {
+              const d = new Date(l.fuelDate ?? l.createdAt);
+              const now = new Date();
+              return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+            }).length}
+          </div>
           <div className="flex items-center text-sm text-green-600 mt-2">
             <TrendingUp className="w-4 h-4 mr-1" />
             <span>+3.8% improvement</span>
@@ -208,7 +257,7 @@ export const FuelPage = () => {
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
-                data={vehicleEfficiency}
+                data={vehicleByType}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -216,7 +265,7 @@ export const FuelPage = () => {
                 paddingAngle={2}
                 dataKey="value"
               >
-                {vehicleEfficiency.map((entry, index) => (
+                {vehicleByType.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
@@ -224,13 +273,13 @@ export const FuelPage = () => {
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-4 space-y-2">
-            {vehicleEfficiency.map((item) => (
+            {vehicleByType.map((item) => (
               <div key={item.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-gray-700">{item.name}</span>
                 </div>
-                <span className="font-medium text-gray-900">{item.value}%</span>
+                <span className="font-medium text-gray-900">{item.value.toLocaleString()} gal</span>
               </div>
             ))}
           </div>

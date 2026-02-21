@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../lib/api'
@@ -19,6 +19,7 @@ export const DispatchPage = () => {
   })
   const [completeTripId, setCompleteTripId] = useState<string | null>(null)
   const [endOdometerKm, setEndOdometerKm] = useState<string>('')
+  const [justCompleted, setJustCompleted] = useState<string[]>([])
 
   const { data: availableVehicles } = useQuery({
     queryKey: ['vehicles', 'AVAILABLE'],
@@ -112,16 +113,59 @@ export const DispatchPage = () => {
   const completeTrip = useMutation({
     mutationFn: async ({ id, endOdometerKm }: { id: string; endOdometerKm: number }) =>
       (await api.post(`/trips/${id}/complete`, { endOdometerKm })).data,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       setCompleteTripId(null)
       setEndOdometerKm('')
       toast.success('Trip completed')
+      if (variables?.id) {
+        setJustCompleted((prev) => (prev.includes(variables.id) ? prev : [...prev, variables.id]))
+      }
       queryClient.invalidateQueries({ queryKey: ['trips'] })
     },
     onError: (e: any) => {
       toast.error(e?.response?.data?.message || 'Complete failed')
     },
   })
+
+  const fixForTrip = useMutation({
+    mutationFn: async (t: any) => {
+      const fixes: Promise<any>[] = []
+      // Try renew license if expired
+      if (t?.driver?.licenseExpiryDate && new Date(t.driver.licenseExpiryDate) < new Date()) {
+        fixes.push(api.patch(`/drivers/${t.driver.id}/license`, {}))
+      }
+      // Ensure driver is ON_DUTY if not ON_TRIP
+      if (t?.driver?.status && t.driver.status !== 'ON_DUTY' && t.driver.status !== 'ON_TRIP') {
+        fixes.push(api.patch(`/drivers/${t.driver.id}/status`, { status: 'ON_DUTY' }))
+      }
+      await Promise.all(fixes)
+      return true
+    },
+    onSuccess: () => {
+      toast.success('Driver made dispatch-ready')
+      queryClient.invalidateQueries({ queryKey: ['drivers'] })
+      queryClient.invalidateQueries({ queryKey: ['trips', 'DRAFT'] })
+    },
+    onError: () => toast.error('Unable to auto-fix driver'),
+  })
+
+  const issuesForTrip = useMemo(() => {
+    return (t: any) => {
+      const issues: string[] = []
+      if (!t?.vehicle || t.vehicle.status !== 'AVAILABLE') issues.push('Vehicle not AVAILABLE')
+      if (!t?.driver) issues.push('Driver missing')
+      else {
+        if (t.driver.status !== 'ON_DUTY') issues.push('Driver not ON_DUTY')
+        if (t.driver.licenseExpiryDate && new Date(t.driver.licenseExpiryDate) < new Date()) issues.push('License expired')
+        if (t?.vehicle?.type && t.driver.licenseCategory && t.driver.licenseCategory !== t.vehicle.type)
+          issues.push('Category mismatch')
+      }
+      if (t?.vehicle?.maxCapacityKg != null && t?.cargoWeightKg != null && Number(t.cargoWeightKg) > Number(t.vehicle.maxCapacityKg)) {
+        issues.push('Cargo exceeds capacity')
+      }
+      return issues
+    }
+  }, [])
 
   return (
     <div className="p-6">
@@ -130,10 +174,6 @@ export const DispatchPage = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dispatch</h1>
           <p className="text-gray-600">Create and manage trips</p>
         </div>
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2">
-          <Plus className="w-5 h-5" />
-          <span>New Trip</span>
-        </button>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-8">
@@ -234,12 +274,36 @@ export const DispatchPage = () => {
                     <td className="px-4 py-2">{t.vehicle?.vehicleCode ?? '-'}</td>
                     <td className="px-4 py-2">{t.driver?.fullName ?? '-'}</td>
                     <td className="px-4 py-2">
-                      <button
-                        onClick={() => dispatchTrip.mutate(t.id)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded"
-                      >
-                        Dispatch
-                      </button>
+                      {(() => {
+                        const issues = issuesForTrip(t)
+                        const canDispatch = issues.length === 0
+                        return (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => dispatchTrip.mutate(t.id)}
+                              disabled={!canDispatch}
+                              className={`px-3 py-1 rounded text-white ${
+                                canDispatch ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-300 cursor-not-allowed'
+                              }`}
+                            >
+                              Dispatch
+                            </button>
+                            {!canDispatch && (
+                              <>
+                                <span className="text-xs text-red-600">
+                                  {issues.join(' • ')}
+                                </span>
+                                <button
+                                  onClick={() => fixForTrip.mutate(t)}
+                                  className="px-2 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50"
+                                >
+                                  Fix
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -272,13 +336,19 @@ export const DispatchPage = () => {
                   <td className="px-4 py-2">{t.driver?.fullName ?? '-'}</td>
                   <td className="px-4 py-2">{t.startTime ? new Date(t.startTime).toLocaleString() : '-'}</td>
                   <td className="px-4 py-2">
-                    <button
-                      onClick={() => setCompleteTripId(t.id)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-                      disabled={!t.id}
-                    >
-                      Complete
-                    </button>
+                    {justCompleted.includes(t.id) ? (
+                      <span className="inline-block px-3 py-1 rounded bg-gray-200 text-gray-700 text-sm">
+                        Completed
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setCompleteTripId(t.id)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                        disabled={!t.id}
+                      >
+                        Complete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

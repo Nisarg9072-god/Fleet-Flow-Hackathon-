@@ -16,9 +16,11 @@ import {
 import { Navbar } from '../../components/Navbar';
 import { Footer } from '../../components/Footer';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
+import { useAuth } from '../../context/AuthContext';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const heroImages = [
     'https://images.pexels.com/photos/12418932/pexels-photo-12418932.jpeg',
     'https://images.unsplash.com/photo-1766561994067-dbd575e1cff2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmbGVldCUyMHRydWNrJTIwaGlnaHdheSUyMGxvZ2lzdGljc3xlbnwxfHx8fDE3NzE2NTM2NDl8MA&ixlib=rb-4.1.0&q=80&w=1920',
@@ -175,13 +177,23 @@ export const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
-              <button
-                onClick={() => navigate('/login')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl hover:scale-105 flex items-center justify-center group"
-              >
-                Check Pricing
-                <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => navigate('/app/dashboard')}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl hover:scale-105 flex items-center justify-center group"
+                >
+                  Go to Dashboard
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl hover:scale-105 flex items-center justify-center group"
+                >
+                  Login
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
               <button className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 rounded-full text-lg font-medium transition-all">
                 See Demo
               </button>
@@ -419,13 +431,23 @@ export const LandingPage = () => {
               Join leading enterprises using FleetOps to drive efficiency and reduce costs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => navigate('/login')}
-                className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl inline-flex items-center justify-center group"
-              >
-                Get Started Now
-                <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => navigate('/app/dashboard')}
+                  className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl inline-flex items-center justify-center group"
+                >
+                  Go to Dashboard
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl inline-flex items-center justify-center group"
+                >
+                  Get Started Now
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
               <button className="border-2 border-white text-white hover:bg-white hover:text-indigo-600 px-8 py-4 rounded-full text-lg font-medium transition-all">
                 Schedule a Demo
               </button>

@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { HttpError } = require("../utils/httpError");
+const { emitEvent } = require("../sockets");
 
 async function addFuel(req, res, next) {
   try {
@@ -20,6 +21,9 @@ async function addFuel(req, res, next) {
     });
 
     res.status(201).json({ success: true, log });
+    try {
+      emitEvent("fuel:added", { logId: log.id, vehicleId, cost: Number(cost), liters: Number(liters) });
+    } catch {}
   } catch (e) {
     next(e);
   }
@@ -30,6 +34,10 @@ async function listFuel(req, res, next) {
     const { vehicleId } = req.query;
     const logs = await prisma.fuelLog.findMany({
       where: { ...(vehicleId ? { vehicleId } : {}) },
+      include: {
+        vehicle: true,
+        trip: { include: { driver: true } }
+      },
       orderBy: { createdAt: "desc" }
     });
     res.json({ success: true, logs });

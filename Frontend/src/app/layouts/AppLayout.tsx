@@ -15,6 +15,7 @@ import {
   X,
   ChevronLeft,
   Navigation,
+  Home as HomeIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -160,6 +161,15 @@ export const AppLayout = () => {
           >
             <Menu className="w-6 h-6 text-gray-600" />
           </button>
+
+          <Link
+            to="/"
+            className="ml-3 inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+            title="Go to Home"
+          >
+            <HomeIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Home</span>
+          </Link>
 
           <div className="flex-1" />
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { getSocket } from '../../lib/socket'
+import { format } from 'date-fns'
 import {
   Truck,
   Users,
@@ -32,7 +33,7 @@ export const DashboardPage = () => {
     queryKey: ['kpis'],
     queryFn: async () => {
       const res = await api.get('/dashboard/kpis')
-      return res.data
+      return res.data?.kpis ?? {}
     },
     staleTime: 10000,
   })
@@ -44,6 +45,14 @@ export const DashboardPage = () => {
       return res.data?.trips ?? []
     },
   })
+  const { data: fuelLogs } = useQuery({
+    queryKey: ['fuel'],
+    queryFn: async () => {
+      const res = await api.get('/fuel')
+      return res.data?.logs ?? []
+    },
+    staleTime: 30000,
+  })
 
   useEffect(() => {
     const s = getSocket()
@@ -51,17 +60,22 @@ export const DashboardPage = () => {
       queryClient.invalidateQueries({ queryKey: ['kpis'] })
       queryClient.invalidateQueries({ queryKey: ['trips'] })
     }
+    const refetchFuel = () => {
+      queryClient.invalidateQueries({ queryKey: ['fuel'] })
+    }
     s.on('trip:dispatched', refetch)
     s.on('trip:completed', refetch)
     s.on('vehicle:statusChanged', refetch)
     s.on('driver:statusChanged', refetch)
     s.on('maintenance:logged', refetch)
+    s.on('fuel:added', refetchFuel)
     return () => {
       s.off('trip:dispatched', refetch)
       s.off('trip:completed', refetch)
       s.off('vehicle:statusChanged', refetch)
       s.off('driver:statusChanged', refetch)
       s.off('maintenance:logged', refetch)
+      s.off('fuel:added', refetchFuel)
     }
   }, [queryClient])
 
@@ -107,24 +121,48 @@ export const DashboardPage = () => {
     [kpis]
   )
 
-  const fleetActivity = [
-    { time: '00:00', active: 12 },
-    { time: '04:00', active: 8 },
-    { time: '08:00', active: 65 },
-    { time: '12:00', active: 98 },
-    { time: '16:00', active: 87 },
-    { time: '20:00', active: 45 },
-    { time: '23:59', active: 18 },
-  ]
+  const fleetActivity = useMemo(() => {
+    const bins = [
+      { label: '00:00', start: 0, end: 3 },
+      { label: '04:00', start: 4, end: 7 },
+      { label: '08:00', start: 8, end: 11 },
+      { label: '12:00', start: 12, end: 15 },
+      { label: '16:00', start: 16, end: 19 },
+      { label: '20:00', start: 20, end: 23 },
+      { label: '23:59', start: 23, end: 23 },
+    ]
+    const counts = bins.map(() => 0)
+    ;(trips ?? []).forEach((t: any) => {
+      if (!t?.startTime) return
+      const h = new Date(t.startTime).getHours()
+      bins.forEach((b, i) => {
+        if (h >= b.start && h <= b.end) counts[i] += 1
+      })
+    })
+    return bins.map((b, i) => ({ time: b.label, active: counts[i] }))
+  }, [trips])
 
-  const fuelData = [
-    { month: 'Jan', cost: 45000 },
-    { month: 'Feb', cost: 42000 },
-    { month: 'Mar', cost: 38000 },
-    { month: 'Apr', cost: 35000 },
-    { month: 'May', cost: 32000 },
-    { month: 'Jun', cost: 29000 },
-  ]
+  const fuelData = useMemo(() => {
+    // last 6 months including current
+    const now = new Date()
+    const months: { key: string; label: string; y: number; m: number }[] = []
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      months.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: format(d, 'MMM'),
+        y: d.getFullYear(),
+        m: d.getMonth(),
+      })
+    }
+    const totals: Record<string, number> = Object.fromEntries(months.map((m) => [m.key, 0]))
+    ;(fuelLogs ?? []).forEach((l: any) => {
+      const d = new Date(l.fuelDate ?? l.createdAt ?? l.date)
+      const key = `${d.getFullYear()}-${d.getMonth()}`
+      if (key in totals) totals[key] += Number(l.cost ?? 0)
+    })
+    return months.map((m) => ({ month: m.label, cost: Math.round(totals[m.key]) }))
+  }, [fuelLogs])
 
   return (
     <div className="p-6">
