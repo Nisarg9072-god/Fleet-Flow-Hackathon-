@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/public/LoginPage';
+import { SignUpPage } from './pages/public/SignUpPage';
 import { AppLayout } from './layouts/AppLayout';
 import { DashboardPage } from './pages/app/DashboardPage';
 import { TrackingPage } from './pages/app/TrackingPage';
@@ -24,6 +25,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     Component: LoginPage,
+  },
+  {
+    path: '/signup',
+    Component: SignUpPage,
   },
   {
     path: '/app',
@@ -56,7 +61,7 @@ export const router = createBrowserRouter([
       {
         path: 'drivers',
         element: (
-          <RoleRoute allowed={['FLEET_MANAGER', 'SAFETY_OFFICER']}>
+          <RoleRoute allowed={['FLEET_MANAGER', 'SAFETY_OFFICER', 'DISPATCHER']}>
             <DriversPage />
           </RoleRoute>
         ),

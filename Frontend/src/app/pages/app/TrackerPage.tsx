@@ -6,7 +6,10 @@ import { toast } from 'sonner'
 export const TrackerPage = () => {
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles', 'ALL'],
-    queryFn: async () => (await api.get('/vehicles')).data,
+    queryFn: async () => {
+      const res = await api.get('/vehicles')
+      return res.data?.vehicles ?? []
+    },
   })
   const [vehicleId, setVehicleId] = useState<string>('')
   const [watchId, setWatchId] = useState<number | null>(null)
@@ -83,7 +86,7 @@ export const TrackerPage = () => {
             <option value="">Select a vehicle</option>
             {(vehicles ?? []).map((v: any) => (
               <option key={v.id} value={v.id}>
-                {v.code}
+                {v.vehicleCode}
               </option>
             ))}
           </select>

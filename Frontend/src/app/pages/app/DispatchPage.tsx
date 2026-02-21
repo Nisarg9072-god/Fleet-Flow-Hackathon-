@@ -22,19 +22,31 @@ export const DispatchPage = () => {
 
   const { data: availableVehicles } = useQuery({
     queryKey: ['vehicles', 'AVAILABLE'],
-    queryFn: async () => (await api.get('/vehicles?status=AVAILABLE')).data,
+    queryFn: async () => {
+      const res = await api.get('/vehicles?status=AVAILABLE')
+      return res.data?.vehicles ?? []
+    },
   })
   const { data: availableDrivers } = useQuery({
     queryKey: ['drivers', 'ON_DUTY'],
-    queryFn: async () => (await api.get('/drivers?status=ON_DUTY')).data,
+    queryFn: async () => {
+      const res = await api.get('/drivers?status=ON_DUTY&validOnly=true')
+      return res.data?.drivers ?? []
+    },
   })
   const { data: drafts } = useQuery({
     queryKey: ['trips', 'DRAFT'],
-    queryFn: async () => (await api.get('/trips?status=DRAFT')).data,
+    queryFn: async () => {
+      const res = await api.get('/trips?status=DRAFT')
+      return res.data?.trips ?? []
+    },
   })
   const { data: dispatched } = useQuery({
     queryKey: ['trips', 'DISPATCHED'],
-    queryFn: async () => (await api.get('/trips?status=DISPATCHED')).data,
+    queryFn: async () => {
+      const res = await api.get('/trips?status=DISPATCHED')
+      return res.data?.trips ?? []
+    },
   })
 
   useEffect(() => {
@@ -42,7 +54,8 @@ export const DispatchPage = () => {
     const refetch = () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] })
       queryClient.invalidateQueries({ queryKey: ['drivers'] })
-      queryClient.invalidateQueries({ queryKey: ['trips'] })
+      queryClient.invalidateQueries({ queryKey: ['trips', 'DRAFT'] })
+      queryClient.invalidateQueries({ queryKey: ['trips', 'DISPATCHED'] })
     }
     s.on('trip:dispatched', refetch)
     s.on('trip:completed', refetch)
@@ -57,17 +70,26 @@ export const DispatchPage = () => {
   }, [queryClient])
 
   const createTrip = useMutation({
-    mutationFn: async () =>
-      (await api.post('/trips', {
+    mutationFn: async () => {
+      if (!form.origin || !form.destination || !form.cargoWeightKg || !form.vehicleId || !form.driverId) {
+        throw new Error('Missing required fields')
+      }
+      return (await api.post('/trips', {
         origin: form.origin,
         destination: form.destination,
         cargoWeightKg: Number(form.cargoWeightKg),
         revenue: form.revenue ? Number(form.revenue) : undefined,
         vehicleId: form.vehicleId,
         driverId: form.driverId,
-      })).data,
+      })).data
+    },
     onSuccess: () => {
+      toast.success('Draft created')
+      setForm({ origin: '', destination: '', cargoWeightKg: '', revenue: '', vehicleId: '', driverId: '' })
       queryClient.invalidateQueries({ queryKey: ['trips', 'DRAFT'] })
+    },
+    onError: (e: any) => {
+      toast.error(e?.response?.data?.message || e?.message || 'Create failed')
     },
   })
 
@@ -75,7 +97,8 @@ export const DispatchPage = () => {
     mutationFn: async (id: string) => (await api.post(`/trips/${id}/dispatch`)).data,
     onSuccess: () => {
       toast.success('Trip dispatched')
-      queryClient.invalidateQueries({ queryKey: ['trips'] })
+      queryClient.invalidateQueries({ queryKey: ['trips', 'DRAFT'] })
+      queryClient.invalidateQueries({ queryKey: ['trips', 'DISPATCHED'] })
       queryClient.invalidateQueries({ queryKey: ['vehicles'] })
       queryClient.invalidateQueries({ queryKey: ['drivers'] })
     },
@@ -117,6 +140,16 @@ export const DispatchPage = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Create Trip</h3>
           <div className="grid grid-cols-1 gap-4">
+            {!(availableVehicles && availableVehicles.length) && (
+              <div className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded p-3">
+                No AVAILABLE vehicles. Add vehicles or complete existing trips.
+              </div>
+            )}
+            {!(availableDrivers && availableDrivers.length) && (
+              <div className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded p-3">
+                No ON_DUTY drivers. Ensure drivers are on duty.
+              </div>
+            )}
             <input
               placeholder="Origin"
               className="px-3 py-2 border border-gray-300 rounded-lg"
@@ -151,7 +184,7 @@ export const DispatchPage = () => {
               <option value="">Select Vehicle</option>
               {(availableVehicles ?? []).map((v: any) => (
                 <option value={v.id} key={v.id}>
-                  {v.code} ({v.capacityKg} kg)
+                  {v.vehicleCode} ({v.maxCapacityKg} kg)
                 </option>
               ))}
             </select>
@@ -161,15 +194,21 @@ export const DispatchPage = () => {
               onChange={(e) => setForm({ ...form, driverId: e.target.value })}
             >
               <option value="">Select Driver</option>
-              {(availableDrivers ?? []).map((d: any) => (
+              {(() => {
+                const selectedVehicle = (availableVehicles ?? []).find((v: any) => v.id === form.vehicleId)
+                const cat = selectedVehicle?.type
+                const filtered = (availableDrivers ?? []).filter((d: any) => (cat ? d.licenseCategory === cat : true))
+                return filtered
+              })().map((d: any) => (
                 <option value={d.id} key={d.id}>
-                  {d.name}
+                  {d.fullName}
                 </option>
               ))}
             </select>
             <button
               onClick={() => createTrip.mutate()}
               className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg"
+              disabled={!form.origin || !form.destination || !form.cargoWeightKg || !form.vehicleId || !form.driverId}
             >
               Create
             </button>
@@ -192,8 +231,8 @@ export const DispatchPage = () => {
                 {(drafts ?? []).map((t: any) => (
                   <tr key={t.id} className="border-t border-gray-200">
                     <td className="px-4 py-2">{t.tripCode}</td>
-                    <td className="px-4 py-2">{t.vehicleCode}</td>
-                    <td className="px-4 py-2">{t.driverName}</td>
+                    <td className="px-4 py-2">{t.vehicle?.vehicleCode ?? '-'}</td>
+                    <td className="px-4 py-2">{t.driver?.fullName ?? '-'}</td>
                     <td className="px-4 py-2">
                       <button
                         onClick={() => dispatchTrip.mutate(t.id)}
@@ -229,13 +268,14 @@ export const DispatchPage = () => {
               {(dispatched ?? []).map((t: any) => (
                 <tr key={t.id} className="border-t border-gray-200">
                   <td className="px-4 py-2">{t.tripCode}</td>
-                  <td className="px-4 py-2">{t.vehicleCode}</td>
-                  <td className="px-4 py-2">{t.driverName}</td>
+                  <td className="px-4 py-2">{t.vehicle?.vehicleCode ?? '-'}</td>
+                  <td className="px-4 py-2">{t.driver?.fullName ?? '-'}</td>
                   <td className="px-4 py-2">{t.startTime ? new Date(t.startTime).toLocaleString() : '-'}</td>
                   <td className="px-4 py-2">
                     <button
                       onClick={() => setCompleteTripId(t.id)}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                      disabled={!t.id}
                     >
                       Complete
                     </button>

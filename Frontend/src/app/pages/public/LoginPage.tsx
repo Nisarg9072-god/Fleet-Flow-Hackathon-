@@ -24,7 +24,7 @@ export const LoginPage = () => {
       toast.success('Logged in');
       navigate('/app/dashboard');
     } catch (err: any) {
-      setError('Invalid credentials or server unavailable. Use demo@fleetops.com');
+      setError(err?.response?.data?.message || 'Invalid email or password');
       toast.error(err?.response?.data?.message || 'Login failed');
     } finally {
       setIsLoading(false);
@@ -138,15 +138,9 @@ export const LoginPage = () => {
             </button>
           </form>
 
-          {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">
-              <strong>Demo credentials:</strong>
-            </p>
             <p className="text-sm text-gray-600">
-              Email: demo@fleetops.com
-              <br />
-              Password: (any password)
+              New here? <Link to="/signup" className="text-indigo-600 hover:text-indigo-700 font-medium">Create an account</Link>
             </p>
           </div>
 

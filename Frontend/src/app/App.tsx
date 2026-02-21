@@ -6,7 +6,14 @@ import { Toaster } from './components/ui/sonner';
 import { ThemeProvider } from 'next-themes';
 
 export default function App() {
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: 1,
+      },
+    },
+  });
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>

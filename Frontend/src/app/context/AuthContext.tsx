@@ -11,6 +11,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role?: User['role']) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -32,26 +33,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const login = async (email: string, password: string) => {
-    const normalized = email.trim().toLowerCase();
-    if (normalized === 'demo@fleetops.com') {
-      const demoUser: User = {
-        email: normalized,
-        name: 'Demo User',
-        role: 'FLEET_MANAGER',
-      };
-      const demoToken = 'demo-token';
-      localStorage.setItem('fleetops_token', demoToken);
-      localStorage.setItem('fleetops_user', JSON.stringify(demoUser));
-      setUser(demoUser);
-      setToken(demoToken);
-      return;
-    }
     const res = await api.post('/auth/login', { email, password });
     const { token: jwt, user } = res.data;
     localStorage.setItem('fleetops_token', jwt);
     localStorage.setItem('fleetops_user', JSON.stringify(user));
     setUser(user);
     setToken(jwt);
+  };
+
+  const register = async (name: string, email: string, password: string, role?: User['role']) => {
+    await api.post('/auth/register', { name, email, password, role });
+    // Do not auto-login; let the user sign in explicitly
   };
 
   const logout = () => {
@@ -62,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

@@ -41,7 +41,7 @@ export const DashboardPage = () => {
     queryKey: ['trips', tripStatus],
     queryFn: async () => {
       const res = await api.get(`/trips?status=${tripStatus}`)
-      return res.data
+      return res.data?.trips ?? []
     },
   })
 
@@ -191,8 +191,8 @@ export const DashboardPage = () => {
               {(trips ?? []).map((t: any) => (
                 <tr key={t.id} className="border-t border-gray-200">
                   <td className="px-4 py-2">{t.tripCode}</td>
-                  <td className="px-4 py-2">{t.vehicleCode}</td>
-                  <td className="px-4 py-2">{t.driverName}</td>
+                  <td className="px-4 py-2">{t.vehicle?.vehicleCode ?? t.vehicleCode}</td>
+                  <td className="px-4 py-2">{t.driver?.fullName ?? t.driverName}</td>
                   <td className="px-4 py-2">{t.origin}</td>
                   <td className="px-4 py-2">{t.destination}</td>
                   <td className="px-4 py-2">{t.cargoWeightKg}</td>

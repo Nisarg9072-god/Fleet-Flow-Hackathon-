@@ -3,6 +3,33 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { HttpError } = require("../utils/httpError");
 
+async function register(req, res, next) {
+  try {
+    const { name, email, password, role } = req.body;
+    if (!name || !email || !password) throw new HttpError(400, "VALIDATION_ERROR", "Name, email & password required");
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) throw new HttpError(409, "EMAIL_IN_USE", "Email already registered");
+    const hash = await bcrypt.hash(password, 10);
+    const created = await prisma.user.create({
+      data: {
+        name,
+        email: email.toLowerCase().trim(),
+        passwordHash: hash,
+        role: role && ["FLEET_MANAGER", "DISPATCHER", "SAFETY_OFFICER", "FINANCE_ANALYST"].includes(role) ? role : "DISPATCHER"
+      },
+      select: { id: true, name: true, email: true, role: true }
+    });
+    const token = jwt.sign(
+      { id: created.id, role: created.role, email: created.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.status(201).json({ success: true, token, user: created });
+  } catch (e) {
+    next(e);
+  }
+}
+
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -42,4 +69,4 @@ async function me(req, res, next) {
   }
 }
 
-module.exports = { login, me };
+module.exports = { register, login, me };

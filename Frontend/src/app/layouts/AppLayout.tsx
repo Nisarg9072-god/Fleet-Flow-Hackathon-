@@ -34,7 +34,7 @@ export const AppLayout = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard', roles: ['FLEET_MANAGER','DISPATCHER','SAFETY_OFFICER','FINANCE_ANALYST'] },
     { icon: Map, label: 'Live Map', path: '/app/map', roles: ['DISPATCHER','FLEET_MANAGER','SAFETY_OFFICER'] },
     { icon: Truck, label: 'Vehicles', path: '/app/vehicles', roles: ['FLEET_MANAGER'] },
-    { icon: Users, label: 'Drivers', path: '/app/drivers', roles: ['FLEET_MANAGER','SAFETY_OFFICER'] },
+    { icon: Users, label: 'Drivers', path: '/app/drivers', roles: ['FLEET_MANAGER','SAFETY_OFFICER','DISPATCHER'] },
     { icon: SendHorizontal, label: 'Dispatch', path: '/app/dispatch', roles: ['DISPATCHER'] },
     { icon: Navigation, label: 'Tracker', path: '/app/tracker', roles: ['DISPATCHER'] },
     { icon: Wrench, label: 'Maintenance', path: '/app/maintenance', roles: ['FLEET_MANAGER'] },
