@@ -62,7 +62,7 @@ export const LoginPage = () => {
               <Truck className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-semibold text-gray-900">
-              Horizan
+              Horizon Fleet
             </span>
           </div>
 
@@ -181,7 +181,7 @@ export const LoginPage = () => {
               Operate your fleet with intelligence
             </h2>
             <p className="text-xl text-indigo-100 mb-8">
-              Join thousands of fleet managers who trust Horizan for real-time insights and
+              Join thousands of fleet managers who trust Horizon Fleet for real-time insights and
               AI-driven optimization.
             </p>
             <div className="space-y-4">

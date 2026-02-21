@@ -59,7 +59,7 @@ export const AppLayout = () => {
                 <Truck className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-semibold text-gray-900">
-                Horizan
+                Horizon Fleet
               </span>
             </Link>
           )}
@@ -114,7 +114,7 @@ export const AppLayout = () => {
                   <Truck className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-lg font-semibold text-gray-900">
-                  Horizan
+                  Horizon Fleet
                 </span>
               </Link>
               <button

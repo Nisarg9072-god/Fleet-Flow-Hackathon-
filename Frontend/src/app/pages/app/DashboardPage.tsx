@@ -285,7 +285,7 @@ export const DashboardPage = () => {
         >
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-1">Fuel Cost Trend</h3>
-            <p className="text-sm text-gray-600">Monthly fuel expenses (USD)</p>
+            <p className="text-sm text-gray-600">Monthly fuel expenses (INR)</p>
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={fuelData}>

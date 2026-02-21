@@ -37,7 +37,7 @@ export const Navbar = () => {
             <span className={`text-xl font-semibold transition-colors ${
               isScrolled ? 'text-gray-900' : 'text-white'
             }`}>
-              Horizan
+              Horizon Fleet
             </span>
           </Link>
 

@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { getSocket } from '../../lib/socket';
 import { format } from 'date-fns';
+import { formatINR } from '../../lib/currency';
 
 const LITERS_PER_GALLON = 3.78541;
 type Tx = {
@@ -135,7 +136,7 @@ export const FuelPage = () => {
             <Fuel className="w-5 h-5 text-indigo-600" />
           </div>
           <div className="text-3xl font-bold text-gray-900">
-            ${Math.round(monthlyData[5]?.cost ?? 0).toLocaleString()}
+            {formatINR(Math.round(monthlyData[5]?.cost ?? 0))}
           </div>
           <div className="flex items-center text-sm text-green-600 mt-2">
             <TrendingDown className="w-4 h-4 mr-1" />
@@ -171,11 +172,13 @@ export const FuelPage = () => {
             <TrendingUp className="w-5 h-5 text-orange-600" />
           </div>
           <div className="text-3xl font-bold text-gray-900">
-            $
-            {((monthlyData[5]?.gallons ?? 0) > 0
-              ? (monthlyData[5]?.cost ?? 0) / (monthlyData[5]?.gallons ?? 1)
-              : 0
-            ).toFixed(2)}
+            {formatINR(
+              Number(
+                (monthlyData[5]?.gallons ?? 0) > 0
+                  ? (monthlyData[5]?.cost ?? 0) / (monthlyData[5]?.gallons ?? 1)
+                  : 0
+              )
+            )}
           </div>
           <div className="flex items-center text-sm text-red-600 mt-2">
             <TrendingUp className="w-4 h-4 mr-1" />
@@ -342,10 +345,10 @@ export const FuelPage = () => {
                     {tx.gallons.toFixed(1)} gal
                   </td>
                   <td className="px-6 py-4 text-sm text-right text-gray-900">
-                    ${tx.price.toFixed(2)}
+                    {formatINR(Number(tx.price))}
                   </td>
                   <td className="px-6 py-4 text-sm text-right font-medium text-gray-900">
-                    ${tx.total.toFixed(2)}
+                    {formatINR(Number(tx.total))}
                   </td>
                 </tr>
               ))}

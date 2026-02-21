@@ -1,10 +1,11 @@
 import { motion } from 'motion/react';
-import { TrendingUp, TrendingDown, DollarSign, Truck, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, IndianRupee, Truck, Users } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
 import { getSocket } from '../../lib/socket';
 import { format } from 'date-fns';
+import { formatINR } from '../../lib/currency';
 import {
   LineChart,
   Line,
@@ -205,16 +206,16 @@ export const AnalyticsPage = () => {
     return [
       {
         label: 'Total Revenue',
-        value: `$${Math.round(rev).toLocaleString()}`,
+        value: formatINR(Math.round(rev)),
         change: '',
         trend: 'up',
-        icon: DollarSign,
+        icon: IndianRupee,
         bgColor: 'bg-green-100',
         iconColor: 'text-green-600',
       },
       {
         label: 'Operating Costs',
-        value: `$${Math.round(costs).toLocaleString()}`,
+        value: formatINR(Math.round(costs)),
         change: '',
         trend: 'down',
         icon: TrendingDown,

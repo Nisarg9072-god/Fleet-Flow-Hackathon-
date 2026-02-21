@@ -70,7 +70,7 @@ export const LandingPage = () => {
     {
       company: 'TransLogix Corp',
       quote:
-        'Horizan transformed our operations. We reduced fuel costs by 23% in the first quarter alone.',
+        'Horizon Fleet transformed our operations. We reduced fuel costs by 23% in the first quarter alone.',
       name: 'Sarah Mitchell',
       role: 'VP of Operations',
     },
@@ -264,7 +264,7 @@ export const LandingPage = () => {
               <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1759752394755-1241472b589d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXNoYm9hcmQlMjBhbmFseXRpY3MlMjBzY3JlZW58ZW58MXx8fHwxNzcxNTYzODE2fDA&ixlib=rb-4.1.0&q=80&w=1080"
-                  alt="Horizan Dashboard"
+                  alt="Horizon Fleet Dashboard"
                   className="w-full h-auto"
                 />
               </div>
@@ -374,7 +374,7 @@ export const LandingPage = () => {
               What our customers say
             </h2>
             <p className="text-xl text-gray-600">
-              Join thousands of fleet managers who trust Horizan
+              Join thousands of fleet managers who trust Horizon Fleet
             </p>
           </motion.div>
 
@@ -428,7 +428,7 @@ export const LandingPage = () => {
               Ready to transform your fleet operations?
             </h2>
             <p className="text-xl text-indigo-100 mb-10">
-              Join leading enterprises using Horizan to drive efficiency and reduce costs.
+              Join leading enterprises using Horizon Fleet to drive efficiency and reduce costs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (

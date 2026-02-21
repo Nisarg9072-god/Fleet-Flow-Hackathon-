@@ -7,6 +7,15 @@ html {
   scroll-behavior: smooth;
 }
 
+* {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+::selection {
+  background: #6366f1;
+  color: #ffffff;
+}
+
 /* Custom scrollbar for WebKit browsers */
 ::-webkit-scrollbar {
   width: 10px;

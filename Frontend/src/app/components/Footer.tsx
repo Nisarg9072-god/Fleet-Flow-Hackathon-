@@ -13,7 +13,7 @@ export const Footer = () => {
                 <Truck className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-semibold text-white">
-                Horizan
+                Horizon Fleet
               </span>
             </Link>
             <p className="text-sm text-gray-400 mb-4">
@@ -145,7 +145,7 @@ export const Footer = () => {
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-gray-400">
-              © 2026 Horizan Technologies, Inc. All rights reserved.
+              © 2026 Horizon Fleet Technologies, Inc. All rights reserved.
             </p>
             <p className="text-sm text-gray-400 mt-4 md:mt-0">
               Made with precision for enterprise fleets
