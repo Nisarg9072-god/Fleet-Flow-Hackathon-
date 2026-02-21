@@ -1,4 +1,4 @@
-import { Truck, Twitter, Linkedin, Github } from 'lucide-react';
+import { Twitter, Linkedin, Github } from 'lucide-react';
 import { Link } from 'react-router';
 
 export const Footer = () => {
@@ -8,13 +8,8 @@ export const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Logo Column */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="p-2 bg-indigo-600 rounded-lg">
-                <Truck className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-semibold text-white">
-                Horizon Fleet
-              </span>
+            <Link to="/" className="inline-block mb-4">
+              <span className="text-lg font-semibold text-white">Horizon Fleet</span>
             </Link>
             <p className="text-sm text-gray-400 mb-4">
               Intelligent Fleet Intelligence Platform

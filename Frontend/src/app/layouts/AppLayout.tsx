@@ -51,13 +51,10 @@ export const AppLayout = () => {
           isSidebarCollapsed ? 'w-20' : 'w-64'
         }`}
       >
-        {/* Logo */}
+        {/* Brand */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           {!isSidebarCollapsed && (
-            <Link to="/app/dashboard" className="flex items-center space-x-2">
-              <div className="p-1.5 bg-indigo-600 rounded-lg">
-                <Truck className="w-5 h-5 text-white" />
-              </div>
+            <Link to="/app/dashboard" className="flex items-center">
               <span className="text-lg font-semibold text-gray-900">
                 Horizon Fleet
               </span>
@@ -109,10 +106,7 @@ export const AppLayout = () => {
           <div className="fixed inset-0 bg-gray-900/50" onClick={() => setIsMobileMenuOpen(false)} />
           <aside className="fixed top-0 left-0 bottom-0 w-64 bg-white shadow-xl z-50">
             <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
-              <Link to="/app/dashboard" className="flex items-center space-x-2">
-                <div className="p-1.5 bg-indigo-600 rounded-lg">
-                  <Truck className="w-5 h-5 text-white" />
-                </div>
+              <Link to="/app/dashboard" className="flex items-center">
                 <span className="text-lg font-semibold text-gray-900">
                   Horizon Fleet
                 </span>

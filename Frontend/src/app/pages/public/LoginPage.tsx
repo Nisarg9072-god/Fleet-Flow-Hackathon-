@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { motion } from 'motion/react';
-import { Truck, ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
@@ -56,11 +56,8 @@ export const LoginPage = () => {
             Back to home
           </Link>
 
-          {/* Logo */}
-          <div className="flex items-center space-x-2 mb-8">
-            <div className="p-2 bg-indigo-600 rounded-lg">
-              <Truck className="w-6 h-6 text-white" />
-            </div>
+          {/* Brand */}
+          <div className="flex items-center mb-8">
             <span className="text-2xl font-semibold text-gray-900">
               Horizon Fleet
             </span>

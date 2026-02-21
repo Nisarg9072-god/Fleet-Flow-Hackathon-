@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { motion } from 'motion/react';
-import { Truck, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 
@@ -37,10 +37,7 @@ export const SignUpPage = () => {
           <Link to="/login" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors">
             Back to login
           </Link>
-          <div className="flex items-center space-x-2 mb-8">
-            <div className="p-2 bg-indigo-600 rounded-lg">
-              <Truck className="w-6 h-6 text-white" />
-            </div>
+          <div className="flex items-center mb-8">
             <span className="text-2xl font-semibold text-gray-900">Horizon Fleet</span>
           </div>
           <div className="mb-8">
