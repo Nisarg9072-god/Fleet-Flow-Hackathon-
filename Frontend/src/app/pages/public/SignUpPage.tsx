@@ -41,7 +41,7 @@ export const SignUpPage = () => {
             <div className="p-2 bg-indigo-600 rounded-lg">
               <Truck className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-semibold text-gray-900">FleetOps</span>
+            <span className="text-2xl font-semibold text-gray-900">Horizan</span>
           </div>
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create your account</h1>

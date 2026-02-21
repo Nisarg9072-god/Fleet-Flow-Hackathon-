@@ -16,7 +16,7 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
 app.use(express.json());
 
-app.get("/health", (_req, res) => res.json({ ok: true, name: "FleetOps Server" }));
+app.get("/health", (_req, res) => res.json({ ok: true, name: "Horizan Server" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/vehicles", vehicleRoutes);
