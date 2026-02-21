@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  FLEET_MANAGER
+  DISPATCHER
+  SAFETY_OFFICER
+  FINANCE_ANALYST
+}
+
+enum VehicleType {
+  TRUCK
+  VAN
+  BIKE
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_TRIP
+  IN_SHOP
+  OUT_OF_SERVICE
+}
+
+enum DriverStatus {
+  ON_DUTY
+  OFF_DUTY
+  SUSPENDED
+  ON_TRIP
+}
+
+enum TripStatus {
+  DRAFT
+  DISPATCHED
+  COMPLETED
+  CANCELLED
+}
+
+enum VehicleOnlineStatus {
+  ONLINE
+  OFFLINE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  region       String?
+  createdAt    DateTime @default(now())
+
+  tripsCreated Trip[]   @relation("TripsCreated")
+  maintenanceCreated MaintenanceLog[]
+  fuelCreated FuelLog[]
+}
+
+model Vehicle {
+  id              String        @id @default(cuid())
+  vehicleCode     String        @unique
+  type            VehicleType
+  model           String?
+  licensePlate    String        @unique
+  maxCapacityKg   Int
+  odometerKm      Int           @default(0)
+  status          VehicleStatus @default(AVAILABLE)
+  region          String?
+  acquisitionCost Float         @default(0)
+  createdAt       DateTime      @default(now())
+
+  trips        Trip[]
+  maintenance  MaintenanceLog[]
+  fuelLogs     FuelLog[]
+  locations   VehicleLocation[]
+  presence    VehiclePresence?
+}
+
+model Driver {
+  id                String       @id @default(cuid())
+  fullName          String
+  phone             String?
+  licenseNumber     String       @unique
+  licenseExpiryDate DateTime
+  licenseCategory   VehicleType
+  status            DriverStatus @default(ON_DUTY)
+  safetyScore       Int          @default(80)
+  createdAt         DateTime     @default(now())
+
+  trips Trip[]
+  locations VehicleLocation[]
+  presences VehiclePresence[]
+}
+
+model Trip {
+  id              String     @id @default(cuid())
+  tripCode        String     @unique
+  vehicleId       String
+  driverId        String
+  origin          String
+  destination     String
+  cargoWeightKg   Int
+  status          TripStatus @default(DRAFT)
+  startTime       DateTime?
+  endTime         DateTime?
+  startOdometerKm Int?
+  endOdometerKm   Int?
+  revenue         Float      @default(0)
+  createdAt       DateTime   @default(now())
+
+  createdByUserId String
+  createdByUser   User   @relation("TripsCreated", fields: [createdByUserId], references: [id])
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  driver  Driver  @relation(fields: [driverId], references: [id])
+
+  fuelLogs FuelLog[]
+}
+
+model MaintenanceLog {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  serviceType String
+  vendor      String?
+  cost        Float    @default(0)
+  serviceDate DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  createdByUserId String?
+  createdByUser   User?   @relation(fields: [createdByUserId], references: [id])
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model FuelLog {
+  id        String   @id @default(cuid())
+  vehicleId String
+  tripId    String?
+  liters    Float
+  cost      Float
+  fuelDate  DateTime @default(now())
+  odometerKm Int?
+  createdAt DateTime @default(now())
+
+  createdByUserId String?
+  createdByUser   User?   @relation(fields: [createdByUserId], references: [id])
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  trip    Trip?   @relation(fields: [tripId], references: [id])
+}
+
+model VehicleLocation {
+  id        String   @id @default(cuid())
+  vehicleId String
+  driverId  String?
+  lat       Float
+  lng       Float
+  speedKph  Float?
+  heading   Float?
+  createdAt DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  driver  Driver? @relation(fields: [driverId], references: [id])
+
+  @@index([vehicleId, createdAt])
+}
+
+model VehiclePresence {
+  vehicleId     String              @id
+  driverId      String?
+  lastLat       Float
+  lastLng       Float
+  lastSpeedKph  Float?
+  lastHeading   Float?
+  lastPingAt    DateTime            @default(now())
+  status        VehicleOnlineStatus @default(ONLINE)
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+  driver  Driver? @relation(fields: [driverId], references: [id])
+
+  @@index([lastPingAt])
+}
